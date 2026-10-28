@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -42,7 +42,7 @@ public class Main implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
     }
 
-    private void clientStarted(MinecraftClient client) {
+    private void clientStarted(Minecraft client) {
         loadPoints();
     }
 
@@ -66,15 +66,15 @@ public class Main implements ClientModInitializer {
         }
     }
 
-    private void tick(MinecraftClient client) {
+    private void tick(Minecraft client) {
         if (Command.commandUsed) tick++;
         if (tick > ModConfig.INSTANCE.confirmDelay) {
             if (client.player != null) {
-                client.player.setYaw(ModConfig.INSTANCE.confirmHorizontal);
-                client.player.setPitch(ModConfig.INSTANCE.confirmVertical);
+                client.player.setYRot(ModConfig.INSTANCE.confirmHorizontal);
+                client.player.setXRot(ModConfig.INSTANCE.confirmVertical);
                 if (ModConfig.INSTANCE.returnCamera && (tick > ModConfig.INSTANCE.confirmDelay + ModConfig.INSTANCE.returnCameraDelay)) {
-                    client.player.setYaw(lookDirection.chamberHorizontal());
-                    client.player.setPitch(lookDirection.chamberVertical());
+                    client.player.setYRot(lookDirection.chamberHorizontal());
+                    client.player.setXRot(lookDirection.chamberVertical());
                     Command.commandUsed = false;
                     tick = 0;
                 }

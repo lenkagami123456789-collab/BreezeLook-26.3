@@ -4,10 +4,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
 import sk.breezelook.utills.PointsSuggestionProvider;
 import sk.breezelook.Main.LookDirection;
 
@@ -16,38 +16,38 @@ import static sk.breezelook.Main.*;
 public class Command {
     public static boolean commandUsed;
 
-    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
-        dispatcher.register(ClientCommandManager.literal("look")
-                .then(ClientCommandManager.literal("add")
-                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
-                                .then(ClientCommandManager.argument("horizontal", FloatArgumentType.floatArg())
-                                        .then(ClientCommandManager.argument("vertical", FloatArgumentType.floatArg())
+    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext registryAccess) {
+        dispatcher.register(ClientCommands.literal("look")
+                .then(ClientCommands.literal("add")
+                        .then(ClientCommands.argument("name", StringArgumentType.word())
+                                .then(ClientCommands.argument("horizontal", FloatArgumentType.floatArg())
+                                        .then(ClientCommands.argument("vertical", FloatArgumentType.floatArg())
                                                 .executes(Command::addCommand)
                                         )
                                 )
                         )
                 )
-                .then(ClientCommandManager.literal("remove")
-                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                .then(ClientCommands.literal("remove")
+                        .then(ClientCommands.argument("name", StringArgumentType.word())
                                 .suggests(new PointsSuggestionProvider())
                                 .executes(Command::removeCommand)
                         )
                 )
-                .then(ClientCommandManager.literal("warp")
-                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                .then(ClientCommands.literal("warp")
+                        .then(ClientCommands.argument("name", StringArgumentType.word())
                                 .suggests(new PointsSuggestionProvider())
                                 .executes(Command::warpCommand)
                         )
                 )
-                .then(ClientCommandManager.literal("config")
-                        .then(ClientCommandManager.literal("reload")
+                .then(ClientCommands.literal("config")
+                        .then(ClientCommands.literal("reload")
                             .executes(Command::reloadCommand)
                         )
-                        .then(ClientCommandManager.literal("addchamber")
-                                .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                        .then(ClientCommands.literal("addchamber")
+                                .then(ClientCommands.argument("name", StringArgumentType.word())
                                         .suggests(new PointsSuggestionProvider())
-                                        .then(ClientCommandManager.argument("horizontal", FloatArgumentType.floatArg())
-                                                .then(ClientCommandManager.argument("vertical", FloatArgumentType.floatArg())
+                                        .then(ClientCommands.argument("horizontal", FloatArgumentType.floatArg())
+                                                .then(ClientCommands.argument("vertical", FloatArgumentType.floatArg())
                                                         .executes(Command::addChamberCommand)
                                                 )
                                         )
@@ -60,7 +60,7 @@ public class Command {
     private static int reloadCommand(CommandContext<FabricClientCommandSource> context) {
         ModConfig.readConfig();
         savePoints();
-        context.getSource().sendFeedback(Text.translatable("breezelook.reload"));
+        context.getSource().sendFeedback(Component.translatable("breezelook.reload"));
         return 1;
     }
 
@@ -71,7 +71,7 @@ public class Command {
         float v = FloatArgumentType.getFloat(context, "vertical");
         points.put(pointName, new LookDirection(h,v, 0, 0));
         savePoints();
-        context.getSource().sendFeedback(Text.translatable("breezelook.add", pointName));
+        context.getSource().sendFeedback(Component.translatable("breezelook.add", pointName));
         return 1;
     }
 
@@ -80,7 +80,7 @@ public class Command {
         String pointName = StringArgumentType.getString(context, "name");
         points.remove(pointName);
         savePoints();
-        context.getSource().sendFeedback(Text.translatable("breezelook.remove", pointName));
+        context.getSource().sendFeedback(Component.translatable("breezelook.remove", pointName));
         return 1;
     }
 
@@ -89,8 +89,8 @@ public class Command {
         String pointName = StringArgumentType.getString(context, "name");
         if (!points.containsKey(pointName)) return 1;
         lookDirection = points.get(pointName);
-        context.getSource().getClient().player.setYaw(lookDirection.horizontal());
-        context.getSource().getClient().player.setPitch(lookDirection.vertical());
+        context.getSource().getClient().player.setYRot(lookDirection.horizontal());
+        context.getSource().getClient().player.setXRot(lookDirection.vertical());
         if (ModConfig.INSTANCE.confirm) commandUsed = true;
         return 1;
     }
@@ -102,7 +102,7 @@ public class Command {
         if (!points.containsKey(pointName)) return 1;
         points.put(pointName, new LookDirection(points.get(pointName).horizontal(), points.get(pointName).vertical(), h, v));
         savePoints();
-        context.getSource().sendFeedback(Text.translatable("breezelook.add_chamber"));
+        context.getSource().sendFeedback(Component.translatable("breezelook.add_chamber"));
         return 1;
     }
 }
