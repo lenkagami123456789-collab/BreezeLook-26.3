@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 25
@@ -22,7 +22,16 @@ jobs:
           gradle-version: 9.7.1
 
       - name: Build
-        run: gradle build --no-daemon
+        run: |
+          set -o pipefail
+          gradle build --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Show build errors
+        if: failure()
+        run: |
+          # Surface the tail of the Gradle log as an annotation
+          msg=$(grep -vE '^\s*$' build.log | tail -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Gradle build failed::${msg}"
 
       - name: Upload mod jar
         uses: actions/upload-artifact@v4
