@@ -16,15 +16,12 @@ jobs:
           distribution: temurin
           java-version: 25
 
-      # The repo has no gradlew scripts, so install Gradle directly
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 9.7.1
 
       - name: Build
         run: |
           set -o pipefail
-          gradle build --no-daemon 2>&1 | tee build.log
+          ./gradlew build --no-daemon 2>&1 | tee build.log
 
       - name: Show build errors
         if: failure()
