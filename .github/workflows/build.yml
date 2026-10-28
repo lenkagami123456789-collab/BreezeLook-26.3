@@ -24,13 +24,13 @@ jobs:
       - name: Build
         run: |
           set -o pipefail
-          gradle build --no-daemon --stacktrace 2>&1 | tee build.log
+          gradle build --no-daemon 2>&1 | tee build.log
 
       - name: Show build errors
         if: failure()
         run: |
           # Surface the tail of the Gradle log as an annotation
-          msg=$(grep -vE '^\s*$' build.log | tail -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+          msg=$( (grep -E -A4 'error:|What went wrong' build.log || tail -40 build.log) | head -60 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=Gradle build failed::${msg}"
 
       - name: Upload mod jar
